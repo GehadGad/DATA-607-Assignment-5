@@ -1,0 +1,211 @@
+---
+title: "Assignment 5"
+output: html_document
+---
+
+
+***Gehad Gad***
+
+***March 1st, 2020***
+
+***Assignment 5***
+
+
+
+```{r}
+#Import libraries and/or Packages:
+
+library (tidyr)
+library (dplyr)
+install.packages("funModeling")
+library(funModeling)
+install.packages("tidyverse")
+library(tidyverse)
+library(Hmisc)
+install.packages('ggpubr')
+library(ggpubr)
+install.packages("modeest")
+library(modeest)
+
+```
+
+
+```{r}
+
+#Import the data from csv file:
+
+Airlines <- read.csv ("Airlines.csv")
+
+#To have access to the data from GitHub:
+
+#Airlines_GitHub <- read.csv ("https://github.com/GehadGad/Airlines-data-Assignment5/raw/master/Airlines.csv")
+
+
+#Display the data.
+
+head (Airlines)
+
+```
+
+
+```{r}
+#Replace the NA values for the Airlines names.
+
+for(i in 2:nrow(Airlines)){
+  if(is.na(Airlines$Airline[i])){
+    Airlines$Airline[i] <- Airlines$Airline[i-1]
+  }
+}
+
+
+#Remove the third row.
+Airlines = Airlines[-c(3),]
+#Display the data.
+head (Airlines)
+
+
+head (Airlines)
+
+
+```
+
+
+```{r}
+#Create a new data frame called gather_df to tide the data and have all cities into one column.
+
+gather_df <- gather(Airlines, City, Number, 3:7)
+
+#Display the tidy data.
+head (gather_df)
+
+```
+
+
+
+```{r}
+#Create a new data frame called spread_df to spread the two rows (on time and delayed) into two columns.
+
+spread_df <- spread(gather_df, ArrivalStatus, Number, 3:7) 
+arrange(Airlines) 
+
+spread_df = rename (spread_df, "on_time" = "on time")
+
+#Display the spread data.
+
+head(spread_df)
+
+```
+
+
+
+```{r}
+
+#Remove the (,) because it change values over 1,000 to NA values.
+
+spread_df []= lapply(spread_df, gsub, pattern = ",", replacement = "")
+
+#Change the two columns (on_timev and delayed) from char to numeric. changing it to numeric so that I can add the two columns and we cann't add chr values.
+
+spread_df$on_time <- as.numeric (as.character(spread_df$on_time))
+
+spread_df$delayed <- as.numeric (spread_df$delayed)
+
+
+```
+
+
+
+```{r}
+#Add new column to add the total number of on_time and delayed flights.
+
+spread_df %>%
+  group_by(Airline, City) %>%
+  mutate(Total = sum(on_time, delayed))
+
+
+```
+
+
+
+
+***Perform analysis to compare the arrival delays for the two airlines.***
+
+```{r}
+
+summary(spread_df)
+
+```
+The Summary shows the minimum and maximum number of delayed and on time flights.
+It also shows the mean and median for delayed and on time flights.
+
+
+
+```{r}
+
+#Get the Variance. The formula for Variance is: 1/(n-1)*sum((x-mean)**2)
+
+ontime= spread_df$on_time
+
+var(ontime)
+
+```
+
+
+```{r}
+#Find the correlation between on_time and delayed flights.
+
+cor(spread_df$on_time,spread_df$delayed)
+```
+Correlation shows how strongly the variables are related. The correlation ranges from -1.0 to +1.0. The closer the correlation (r) to +1 or -1, the more closely the two variables are related. The cor between delayed and on time is very high and close to 1. However, we need to keep in mind that this data is very small.
+
+
+
+
+```{r}
+
+ggscatter(spread_df, x= "on_time", y= "delayed", add = "reg.line", cor.coef = TRUE, conf.int = TRUE)
+
+
+```
+This is a scatter with a regression line and including the Correlation and p values.
+
+
+```{r}
+#Graphs
+
+freq(spread_df)
+
+
+```
+This graph shows the distribution of all the cities.
+
+
+```{r}
+plot_num (spread_df)
+
+```
+This graph shows the distribution of on_time and delayed flights.
+
+
+```{r}
+ggboxplot(spread_df ,  y = 'ontime')
+```
+Boxplot displays the distribution of on_time flights. The two dots are considered as outliers!
+
+
+
+```{r}
+
+ggboxplot(spread_df ,  y = 'delayed')
+
+```
+Boxplot displays the distribution of delayed flights. The two dots are considered as outliers!
+
+
+```{r}
+
+ggbarplot(spread_df ,  x= "Airline", y= "on_time", color = "City" , position = position_dodge())
+
+```
+
+The graph above displays distribution of on_time flight in the two airline and cities.
